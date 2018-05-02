@@ -2,7 +2,9 @@
 
 set(LIBUNWIND_CXX_SOURCES
     libunwind.cpp
-    Unwind-EHABI.cpp)
+    Unwind-EHABI.cpp
+    UnwindRegistersRestore.cpp
+    UnwindRegistersSave.cpp)
 append_if(LIBUNWIND_CXX_SOURCES APPLE Unwind_AppleExtras.cpp)
 
 set(LIBUNWIND_C_SOURCES
@@ -12,13 +14,6 @@ set(LIBUNWIND_C_SOURCES
 set_source_files_properties(${LIBUNWIND_C_SOURCES}
                             PROPERTIES
                               COMPILE_FLAGS "-std=c99")
-
-set(LIBUNWIND_ASM_SOURCES
-    UnwindRegistersRestore.S
-    UnwindRegistersSave.S)
-set_source_files_properties(${LIBUNWIND_ASM_SOURCES}
-                            PROPERTIES
-                              LANGUAGE C)
 
 set(LIBUNWIND_HEADERS
     AddressSpace.hpp
@@ -47,7 +42,6 @@ endif()
 set(LIBUNWIND_SOURCES
     ${LIBUNWIND_CXX_SOURCES}
     ${LIBUNWIND_C_SOURCES}
-    ${LIBUNWIND_ASM_SOURCES})
 
 # Generate library list.
 set(libraries ${LIBUNWINDCXX_ABI_LIBRARIES})

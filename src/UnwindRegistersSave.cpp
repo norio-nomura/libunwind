@@ -9,12 +9,15 @@
 
 #include "assembly.h"
 
+asm(R"(
     .text
+)");
 
 #if !defined(__USING_SJLJ_EXCEPTIONS__)
 
 #if defined(__i386__)
 
+asm(R"(
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
@@ -27,7 +30,9 @@
 #   +-----------------------+   <-- SP
 #   +                       +
 #
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   push  %eax
   movl  8(%esp), %eax
   movl  %ebx,  4(%eax)
@@ -53,79 +58,89 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   popl  %eax
   xorl  %eax, %eax    # return UNW_ESUCCESS
   ret
+)");
 
 #elif defined(__x86_64__)
 
+asm(R"(
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
 # On entry:
 #  thread_state pointer is in rdi
 #
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 #if defined(_WIN64)
-#define PTR %rcx
-#define TMP %rdx
+#define PTR "%rcx"
+#define TMP "%rdx"
 #else
-#define PTR %rdi
-#define TMP %rsi
+#define PTR "%rdi"
+#define TMP "%rsi"
 #endif
 
-  movq  %rax,   (PTR)
-  movq  %rbx,  8(PTR)
-  movq  %rcx, 16(PTR)
-  movq  %rdx, 24(PTR)
-  movq  %rdi, 32(PTR)
-  movq  %rsi, 40(PTR)
-  movq  %rbp, 48(PTR)
-  movq  %rsp, 56(PTR)
-  addq  $8,   56(PTR)
-  movq  %r8,  64(PTR)
-  movq  %r9,  72(PTR)
-  movq  %r10, 80(PTR)
-  movq  %r11, 88(PTR)
-  movq  %r12, 96(PTR)
-  movq  %r13,104(PTR)
-  movq  %r14,112(PTR)
-  movq  %r15,120(PTR)
-  movq  (%rsp),TMP
-  movq  TMP,128(PTR) # store return address as rip
+asm("movq  %rax,   (" PTR ")");
+asm("movq  %rbx,  8(" PTR ")");
+asm("movq  %rcx, 16(" PTR ")");
+asm("movq  %rdx, 24(" PTR ")");
+asm("movq  %rdi, 32(" PTR ")");
+asm("movq  %rsi, 40(" PTR ")");
+asm("movq  %rbp, 48(" PTR ")");
+asm("movq  %rsp, 56(" PTR ")");
+asm("addq  $8,   56(" PTR ")");
+asm("movq  %r8,  64(" PTR ")");
+asm("movq  %r9,  72(" PTR ")");
+asm("movq  %r10, 80(" PTR ")");
+asm("movq  %r11, 88(" PTR ")");
+asm("movq  %r12, 96(" PTR ")");
+asm("movq  %r13,104(" PTR ")");
+asm("movq  %r14,112(" PTR ")");
+asm("movq  %r15,120(" PTR ")");
+asm("movq  (%rsp)," TMP);
+asm("movq  " TMP ",128(" PTR ") # store return address as rip");
+asm(R"(
   # skip rflags
   # skip cs
   # skip fs
   # skip gs
+)");
 
 #if defined(_WIN64)
-  movdqu %xmm0,176(PTR)
-  movdqu %xmm1,192(PTR)
-  movdqu %xmm2,208(PTR)
-  movdqu %xmm3,224(PTR)
-  movdqu %xmm4,240(PTR)
-  movdqu %xmm5,256(PTR)
-  movdqu %xmm6,272(PTR)
-  movdqu %xmm7,288(PTR)
-  movdqu %xmm8,304(PTR)
-  movdqu %xmm9,320(PTR)
-  movdqu %xmm10,336(PTR)
-  movdqu %xmm11,352(PTR)
-  movdqu %xmm12,368(PTR)
-  movdqu %xmm13,384(PTR)
-  movdqu %xmm14,400(PTR)
-  movdqu %xmm15,416(PTR)
+asm("movdqu %xmm0,176(" PTR ")")
+asm("movdqu %xmm1,192(" PTR ")")
+asm("movdqu %xmm2,208(" PTR ")")
+asm("movdqu %xmm3,224(" PTR ")")
+asm("movdqu %xmm4,240(" PTR ")")
+asm("movdqu %xmm5,256(" PTR ")")
+asm("movdqu %xmm6,272(" PTR ")")
+asm("movdqu %xmm7,288(" PTR ")")
+asm("movdqu %xmm8,304(" PTR ")")
+asm("movdqu %xmm9,320(" PTR ")")
+asm("movdqu %xmm10,336(" PTR ")")
+asm("movdqu %xmm11,352(" PTR ")")
+asm("movdqu %xmm12,368(" PTR ")")
+asm("movdqu %xmm13,384(" PTR ")")
+asm("movdqu %xmm14,400(" PTR ")")
+asm("movdqu %xmm15,416(" PTR ")")
 #endif
+asm(R"(
   xorl  %eax, %eax    # return UNW_ESUCCESS
   ret
+)");
 
 #elif defined(__mips__) && defined(_ABIO32) && _MIPS_SIM == _ABIO32 &&         \
     defined(__mips_soft_float)
 
+asm(R"(
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
 # On entry:
 #  thread_state pointer is in a0 ($4)
 #
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   .set push
   .set noat
   .set noreorder
@@ -172,16 +187,20 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   # return UNW_ESUCCESS
   or    $2, $0, $0
   .set pop
+)");
 
 #elif defined(__mips64) && defined(__mips_soft_float)
 
+asm(R"(
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
 # On entry:
 #  thread_state pointer is in a0 ($4)
 #
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   .set push
   .set noat
   .set noreorder
@@ -228,15 +247,20 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   # return UNW_ESUCCESS
   or    $2, $0, $0
   .set pop
+)");
 
 # elif defined(__mips__)
 
+asm(R"(
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
 # Just trap for the time being.
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   teq $0, $0
+)");
 
 #elif defined(__powerpc64__)
 
@@ -250,12 +274,16 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 
 // store register (GPR)
 #define PPC64_STR(n) \
-  std   %r##n, (8 * (n + 2))(%r3)
+asm("\
+  std   %" STR(r##n)", (8 * (" STR(n) " + 2))(%r3)\
+");
 
   // save GPRs
   PPC64_STR(0)
+asm(R"(
   mflr  %r0
   std   %r0, PPC64_OFFS_SRR0(%r3) // store lr as ssr0
+)");
   PPC64_STR(1)
   PPC64_STR(2)
   PPC64_STR(3)
@@ -288,28 +316,34 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   PPC64_STR(30)
   PPC64_STR(31)
 
-  mfcr  %r0
-  std   %r0,  PPC64_OFFS_CR(%r3)
-  mfxer %r0
-  std   %r0,  PPC64_OFFS_XER(%r3)
-  mflr  %r0
-  std   %r0,  PPC64_OFFS_LR(%r3)
-  mfctr %r0
-  std   %r0,  PPC64_OFFS_CTR(%r3)
-  mfvrsave    %r0
-  std   %r0,  PPC64_OFFS_VRSAVE(%r3)
+asm("\
+  mfcr  %r0\
+  std   %r0,  " STR(PPC64_OFFS_CR) "(%r3)\
+  mfxer %r0\
+  std   %r0,  " STR(PPC64_OFFS_XER) "(%r3)\
+  mflr  %r0\
+  std   %r0,  " STR(PPC64_OFFS_LR) "(%r3)\
+  mfctr %r0\
+  std   %r0,  " STR(PPC64_OFFS_CTR) "(%r3)\
+  mfvrsave    %r0\
+  std   %r0,  " STR(PPC64_OFFS_VRSAVE) "(%r3)\
+");
 
 #ifdef PPC64_HAS_VMX
   // save VS registers
   // (note that this also saves floating point registers and V registers,
   // because part of VS is mapped to these registers)
 
+asm(R"(
   addi  %r4, %r3, PPC64_OFFS_FP
+)");
 
 // store VS register
 #define PPC64_STVS(n)      \
-  stxvd2x %vs##n, 0, %r4  ;\
-  addi    %r4, %r4, 16
+asm("\
+  stxvd2x %" STR(vs##n) ", 0, %r4  ;\
+  addi    %r4, %r4, 16\
+");
 
   PPC64_STVS(0)
   PPC64_STVS(1)
@@ -380,7 +414,9 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 
 // store FP register
 #define PPC64_STF(n) \
-  stfd  %f##n, (PPC64_OFFS_FP + n * 16)(%r3)
+asm("\
+  stfd  %" STR(f##n)", (" STR(PPC64_OFFS_FP) " + " STR(n) " * 16)(%r3)\
+");
 
   // save float registers
   PPC64_STF(0)
@@ -421,14 +457,18 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   // Use 16-bytes below the stack pointer as an
   // aligned buffer to save each vector register.
   // Note that the stack pointer is always 16-byte aligned.
+asm(R"(
   subi  %r4, %r1, 16
+)");
 
 #define PPC64_STV_UNALIGNED(n)                 \
-  stvx  %v##n, 0, %r4                         ;\
+asm("\
+  stvx  %" STR(v##n) ", 0, %r4                         ;\
   ld    %r5, 0(%r4)                           ;\
-  std   %r5, (PPC64_OFFS_V + n * 16)(%r3)     ;\
+  std   %r5, (" STR(PPC64_OFFS_V) " + " STR(n) " * 16)(%r3)     ;\
   ld    %r5, 8(%r4)                           ;\
-  std   %r5, (PPC64_OFFS_V + n * 16 + 8)(%r3)
+  std   %r5, (" STR(PPC64_OFFS_V) " + " STR(n) " * 16 + 8)(%r3)\
+");
 
   PPC64_STV_UNALIGNED(0)
   PPC64_STV_UNALIGNED(1)
@@ -465,19 +505,24 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 
 #endif
 
+asm(R"(
   li    %r3,  0   // return UNW_ESUCCESS
   blr
+)");
 
 
 #elif defined(__ppc__)
 
+asm(R"(
 ;
 ; extern int unw_getcontext(unw_context_t* thread_state)
 ;
 ; On entry:
 ;  thread_state pointer is in r3
 ;
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   stw    r0,  8(r3)
   mflr  r0
   stw    r0,  0(r3)  ; store lr as ssr0
@@ -563,17 +608,20 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   subi  r4,r1,16
   rlwinm  r4,r4,0,0,27  ; mask low 4-bits
   ; r4 is now a 16-byte aligned pointer into the red zone
+)");
 
 #define SAVE_VECTOR_UNALIGNED(_vec, _offset) \
-  stvx  _vec,0,r4           @\
+asm("\
+  stvx  " STR(_vec) ",0,r4           @\
   lwz    r5, 0(r4)          @\
-  stw    r5, _offset(r3)    @\
+  stw    r5, " STR(_offset) "(r3)    @\
   lwz    r5, 4(r4)          @\
-  stw    r5, _offset+4(r3)  @\
+  stw    r5, " STR(_offset) "+4(r3)  @\
   lwz    r5, 8(r4)          @\
-  stw    r5, _offset+8(r3)  @\
+  stw    r5, " STR(_offset) "+8(r3)  @\
   lwz    r5, 12(r4)         @\
-  stw    r5, _offset+12(r3)
+  stw    r5, " STR(_offset) "+12(r3)\
+");
 
   SAVE_VECTOR_UNALIGNED( v0, 424+0x000)
   SAVE_VECTOR_UNALIGNED( v1, 424+0x010)
@@ -608,8 +656,10 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   SAVE_VECTOR_UNALIGNED(v30, 424+0x1E0)
   SAVE_VECTOR_UNALIGNED(v31, 424+0x1F0)
 
+asm(R"(
   li  r3, 0    ; return UNW_ESUCCESS
   blr
+)");
 
 
 #elif defined(__arm64__) || defined(__aarch64__)
@@ -620,8 +670,11 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 // On entry:
 //  thread_state pointer is in x0
 //
+asm(R"(
   .p2align 2
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   stp    x0, x1,  [x0, #0x000]
   stp    x2, x3,  [x0, #0x010]
   stp    x4, x5,  [x0, #0x020]
@@ -661,13 +714,17 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   str    d31,     [x0, #0x208]
   mov    x0, #0                   // return UNW_ESUCCESS
   ret
+)");
 
 #elif defined(__arm__) && !defined(__APPLE__)
 
 #if !defined(__ARM_ARCH_ISA_ARM)
+asm(R"(
   .thumb
+)");
 #endif
 
+asm(R"(
 @
 @ extern int unw_getcontext(unw_context_t* thread_state)
 @
@@ -681,8 +738,10 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 @ Instead, VFP registers are demand saved by logic external to unw_getcontext.
 @
   .p2align 2
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 #if !defined(__ARM_ARCH_ISA_ARM) && __ARM_ARCH_ISA_THUMB == 1
+asm(R"(
   stm r0!, {r0-r7}
   mov r1, r8
   mov r2, r9
@@ -700,7 +759,9 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   @ It is safe to use here though because we are about to return, and cpsr is
   @ not expected to be preserved.
   movs r0, #0        @ return UNW_ESUCCESS
+)");
 #else
+asm(R"(
   @ 32bit thumb-2 restrictions for stm:
   @ . the sp (r13) cannot be in the list
   @ . the pc (r15) cannot be in the list in an STM instruction
@@ -709,9 +770,11 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   str lr, [r0, #56]
   str lr, [r0, #60]  @ store return address as pc
   mov r0, #0         @ return UNW_ESUCCESS
+)");
 #endif
   JMP(lr)
 
+asm(R"(
 @
 @ static void libunwind::Registers_arm::saveVFPWithFSTMD(unw_fpreg_t* values)
 @
@@ -719,13 +782,19 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 @  values pointer is in r0
 @
   .p2align 2
+)");
 #if defined(__ELF__)
+asm(R"(
   .fpu vfpv3-d16
+)");
 #endif
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMDEPy)
+asm(R"(
   vstmia r0, {d0-d15}
+)");
   JMP(lr)
 
+asm(R"(
 @
 @ static void libunwind::Registers_arm::saveVFPWithFSTMX(unw_fpreg_t* values)
 @
@@ -733,13 +802,19 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMD
 @  values pointer is in r0
 @
   .p2align 2
+)");
 #if defined(__ELF__)
+asm(R"(
   .fpu vfpv3-d16
+)");
 #endif
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMXEPy)
+asm(R"(
   vstmia r0, {d0-d15} @ fstmiax is deprecated in ARMv7+ and now behaves like vstmia
+)");
   JMP(lr)
 
+asm(R"(
 @
 @ static void libunwind::Registers_arm::saveVFPv3(unw_fpreg_t* values)
 @
@@ -747,10 +822,14 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMX
 @  values pointer is in r0
 @
   .p2align 2
+)");
 #if defined(__ELF__)
+asm(R"(
   .fpu vfpv3
+)");
 #endif
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
+asm(R"(
   @ VFP and iwMMX instructions are only available when compiling with the flags
   @ that enable them. We do not want to do that in the library (because we do not
   @ want the compiler to generate instructions that access those) but this is
@@ -759,10 +838,12 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
   @ it's ok to execute.
   @ So, generate the instructions using the corresponding coprocessor mnemonic.
   vstmia r0, {d16-d31}
+)");
   JMP(lr)
 
 #if defined(_LIBUNWIND_ARM_WMMX)
 
+asm(R"(
 @
 @ static void libunwind::Registers_arm::saveiWMMX(unw_fpreg_t* values)
 @
@@ -770,10 +851,14 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
 @  values pointer is in r0
 @
   .p2align 2
+)");
 #if defined(__ELF__)
+asm(R"(
   .arch armv5te
+)");
 #endif
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveiWMMXEPy)
+asm(R"(
   stcl p1, cr0, [r0], #8  @ wstrd wR0, [r0], #8
   stcl p1, cr1, [r0], #8  @ wstrd wR1, [r0], #8
   stcl p1, cr2, [r0], #8  @ wstrd wR2, [r0], #8
@@ -790,8 +875,10 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveiWMMXEPy)
   stcl p1, cr13, [r0], #8  @ wstrd wR13, [r0], #8
   stcl p1, cr14, [r0], #8  @ wstrd wR14, [r0], #8
   stcl p1, cr15, [r0], #8  @ wstrd wR15, [r0], #8
+)");
   JMP(lr)
 
+asm(R"(
 @
 @ static void libunwind::Registers_arm::saveiWMMXControl(unw_uint32_t* values)
 @
@@ -799,27 +886,35 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveiWMMXEPy)
 @  values pointer is in r0
 @
   .p2align 2
+)");
 #if defined(__ELF__)
+asm(R"(
   .arch armv5te
+)");
 #endif
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveiWMMXControlEPj)
+asm(R"(
   stc2 p1, cr8, [r0], #4  @ wstrw wCGR0, [r0], #4
   stc2 p1, cr9, [r0], #4  @ wstrw wCGR1, [r0], #4
   stc2 p1, cr10, [r0], #4  @ wstrw wCGR2, [r0], #4
   stc2 p1, cr11, [r0], #4  @ wstrw wCGR3, [r0], #4
+)");
   JMP(lr)
 
 #endif
 
 #elif defined(__or1k__)
 
+asm(R"(
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
 # On entry:
 #  thread_state pointer is in r3
 #
+)");
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+asm(R"(
   l.sw       0(r3), r0
   l.sw       4(r3), r1
   l.sw       8(r3), r2
@@ -852,6 +947,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   l.sw     116(r3), r29
   l.sw     120(r3), r30
   l.sw     124(r3), r31
+)");
 #endif
 
 #endif /* !defined(__USING_SJLJ_EXCEPTIONS__) */
